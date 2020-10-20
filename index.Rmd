@@ -20,7 +20,7 @@ imdb <- readRDS("imdb2020.RDS")
 ```
 
 
-## Sequence of manipulations
+## Combining manipulations
 
 [Embed video #2]
 
