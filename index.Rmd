@@ -16,7 +16,7 @@ library(learnr)
 library(tidyverse)
 tutorial_options(exercise.timelimit = 10)
 options(max.print=200, dplyr.summarise.inform = FALSE)
-imdb <- as.data.frame(readRDS("imdb2020.RDS"))
+imdb <- readRDS("imdb2020.RDS")
 ```
 
 
@@ -24,32 +24,32 @@ imdb <- as.data.frame(readRDS("imdb2020.RDS"))
 
 [Embed video #2]
 
-As explained in the video, if we don't store the results of our commands, there is no way to re-use them. This is actually true for the great majority of R command, not just those involving the core functions of dplyr. So to perform a sequence of manipulations, we need to either:
+As explained in the video, if we don't store the results of our commands, there is no way to re-use them. This is actually true for the great majority of R commands, not just those involving the core functions of dplyr. So to perform a sequence of manipulations, we need to either:
 
 - store the result of each manipulation as a dataframe, to then make it the first argument of the next function.
 - combine all the manipulations we want to perform into one single command using the pipe operator.
 
 You already know everything there is to know to perform to perform a sequence of manipulations via the first option.
-For example, if we wanted to perform summaries on the entries of type "movie" only, we could do the following:
+For example, if we wanted to calculate summary statistics based only on the movies in the data only, we could do the following:
 
 ```{r sequence_1, exercise = TRUE}
 imdb_movies <- filter(imdb, type=="movie")
-summarize(imdb_movies, entries=n(), meanVotes=mean(numVotes), meanRating=mean(averageRating), sdRating=sd(averageRating))
+summarise(imdb_movies, entries=n(), meanVotes=mean(numVotes), meanRating=mean(averageRating), sdRating=sd(averageRating))
 ```
-First we use `filter()` to keep only the entries of type "movie". We store the result as a dataframe object, arbitrarily called "imdb_movies", and then we use the `summarize()` command of the last workbook, but with the newly created object as the first argument instead of the full imdb dataset.
+First we use `filter()` to keep only the entries of type "movie". We store the result as a new object, called "imdb_movies". Then we use the `summarise()` command, but with the newly created object as the first argument instead of the full imdb dataset.
 
 
 
-**Question: change the command to get summaries for the entries of type "tvSeries"**
+**Question: change the command to get summaries for the tv series instead of movies**
 
 ```{r sequence_2, exercise = TRUE}
 imdb_movies <- filter(imdb, type=="movie")
-summarize(imdb_movies, entries=n(), meanVotes=mean(numVotes), meanRating=mean(averageRating), sdRating=sd(averageRating))
+summarise(imdb_movies, entries=n(), meanVotes=mean(numVotes), meanRating=mean(averageRating), sdRating=sd(averageRating))
 ```
 
 ```{r sequence_2-solution}
 imdb_tvSeries <- filter(imdb, type=="tvSeries")
-summarize(imdb_tvSeries, entries=n(), meanVotes=mean(numVotes), meanRating=mean(averageRating), sdRating=sd(averageRating))
+summarise(imdb_tvSeries, entries=n(), meanVotes=mean(numVotes), meanRating=mean(averageRating), sdRating=sd(averageRating))
 ```
 
 We could do the same for each type of entry, but there is a much better approach: using `group_by()`, the last core function of the package dplyr.
@@ -63,17 +63,18 @@ We could do the same for each type of entry, but there is a much better approach
 group_by(imdb, type)
 
 ```
-It looks like nothing happened to our dataset, but it's just because the grouping is invisible. We need to apply another function to see the effect of group_by(). Let's store our grouped dataframe in an object called say, "imdb_type", and use this object as the first argument of the function summarize()
+It looks like nothing happened to our dataset, but it's just because the grouping is invisible. We need to apply another function to see the effect of group_by(). Let's store our grouped dataframe in an object called say, "imdb_type", and use this object as the first argument of the function summarise()
 
 ```{r group_2, exercise = TRUE}
 imdb_type <- group_by(imdb, type)
-summarize(imdb_type, entries=n(), meanVotes=mean(numVotes), meanRating=mean(averageRating), sdRating=sd(averageRating))
+summarise(imdb_type, entries=n(), meanVotes=mean(numVotes), meanRating=mean(averageRating), sdRating=sd(averageRating))
 ```
 
-**Question: Investigate the result of the previous command. What are the 3 video games in the imdb dataset? Are you surprised by such a low number of entries? Do you trust the values for the average number of votes? Double-check the `Appendix: "imdb" dataset` to remind yourself how the dataset was constructed.**
+**Question: Investigate the result of the previous command. What are the 3 video games in the imdb dataset? (Note: it's not a question where you need to use group_by)**
 ```{r group_3, exercise = TRUE}
 
 ```
+**Are you surprised by such a low number of entries? Do you trust the values for the average number of votes? Double-check the `Appendix: "imdb" dataset` to remind yourself how the dataset was constructed.**
 
 ```{r group_3-solution}
 # A command like
@@ -85,14 +86,34 @@ filter(imdb, type=="videoGame")
 ```
 
 
-The effect of `group_by()` on the result of `summarize()` is very intuitive. We obtain the calculated summaries for each of the groups defined by group_by. At first, it might be slightly less obvious that `group_by()` is also very useful in combination with `filter()` or `mutate()`. But consider the case where we would like to obtain for each type of entry, the one that received the highest number of votes. Using `group_by()`, then `filter()` would give the intended result.
-
+The effect of `group_by()` on the result of `summarise()` is very intuitive. We obtain the calculated summaries for each of the groups defined by group_by. At first, it might be slightly less obvious that `group_by()` is also very useful in combination with `filter()` or `mutate()`. But consider the case where we would like to obtain for each type of entry, the one that received the highest number of votes. With filter, we can easily get the entry that has received the highest number of votes in the full dataset:
 ```{r group_4, exercise = TRUE}
+filter(imdb, numVotes==max(numVotes))
+
+```
+But the highest number of votes in the the full dataset corresponds to the highest number of votes of the movies. For the other types of entry, the maximum number of votes is a lot smaller. And so the associated most popular entries are not captured by our function filter. 
+
+Using `group_by()` first, and *then* `filter()` would restrict the scope of `numVotes==max(numVotes)` to the group of the entry, and so if the entry has the highest number of votes in the group, filter will retrieve it.
+
+```{r group_4a, exercise = TRUE}
 imdb_type<-group_by(imdb, type)
 filter(imdb_type, numVotes==max(numVotes))
 
 ```
+
 That's an interesting list that we have here. I'd definitely recommend you check the most popular entry of type "short" if you have not watched it yet. 
+
+**Question: For each year of release (instead of type of entry), retrieve the entry with the highest average rating (instead of highest number of votes)**
+```{r group_4b, exercise = TRUE}
+
+
+```
+
+```{r group_4b-solution}
+imdb_year<-group_by(imdb, year)
+filter(imdb_year, averageRating==max(averageRating))
+
+```
 
 
 ### ungroup()
@@ -113,8 +134,10 @@ mostPupularUngrouped <- ungroup(mostPopular)
 filter(mostPupularUngrouped, numVotes==min(numVotes))
 
 ```
+You may have noted that my spelling of *popular* was wrong in the name I gave for the third created object (*mostP**u**pularUngrouped*). It is not a problem for R, because names are defined by users. It will be an issue for you though, as it will quickly become difficult to remember the right spelling of all your objects.
 
-Our code starts to be quite messy though, with lots of intermediary dataframes that we are not really interested in. One thing you may suggest to simplify our set of commands is to have only one intermediary dataframe, that we overwrite. Something like
+
+The code above starts to be quite messy, with lots of intermediary dataframes that we are not really interested in. One thing you may suggest to simplify our set of commands is to have only one intermediary dataframe, that we overwrite. Something like
 ```{r group_7, exercise = TRUE}
 temp_data <- group_by(imdb, type)
 temp_data <- filter(temp_data, numVotes==max(numVotes))
@@ -147,9 +170,15 @@ imdb %>% filter(numVotes==max(numVotes))
 ```
 
 In the above commands, the pipe operator asks R to take what's on its left - the dataframe `imdb` - and to make it the first argument of what's on its right - the function `filter()`.
-The command is there fore equivalent to `filter(imdb, numVotes==max(numVotes))`
+The command is therefore equivalent to
 
-Instead of placing the function filter to the right of the pipe, we can, and usually should place it below the pipe, with a little indentation. I's good practice for readability, and it doesn't change anything. R will see the pipe and look for for the next command. This command happens to be below the pipe rather than on its right. Note that the couple of spaces to create the indentation will be created automatically when you'll be using Rstudio.
+```{r pipe_1b, exercise = TRUE}
+filter(imdb, numVotes==max(numVotes))
+
+```
+
+Instead of placing the function filter to the right of the pipe, we can, and usually should place it below the pipe, with a little indentation, similar to what you do with the `+` in ggplot2. It's good practice for readability, and it doesn't change anything. R will see the pipe and look for the next command. This command happens to be below the pipe rather than on its right.
+
 ```{r pipe_2, exercise = TRUE}
 imdb %>%
   filter(numVotes==max(numVotes))
@@ -157,21 +186,31 @@ imdb %>%
 ```
  
 
-What is great with pipes is that the *what's on my left* can well be a command itself, if the result of the command is a dataframe. So we can redo the last commands of the previous section, using pipes as follows.
+What is great with pipes is that the *what's on my left* can well be a command itself, if the result of the command is a dataframe. So we can redo the last commands of the previous section, using pipes.
+
+
+Our commands were
+```{r pipe_2b, exercise = TRUE}
+imdb_type <- group_by(imdb, type)
+mostPopular <- filter(imdb_type, numVotes==max(numVotes))
+mostPupularUngrouped <- ungroup(mostPopular)
+filter(mostPupularUngrouped, numVotes==min(numVotes))
+
+```
+
+
+Using pipes it becomes:
 
 ```{r pipe_3, exercise = TRUE}
 imdb %>%
   group_by(type) %>%
-  filter(numVotes==max(numVotes)) %>%
-  ungroup() %>%
-  filter(numVotes==min(numVotes))
-
+    filter(numVotes==max(numVotes)) %>%
+      ungroup() %>%
+        filter(numVotes==min(numVotes))
 
 ```
 
-We start with the dataset `imdb`. The pipe next to it will make it the first argument of the function `group_by()` that follows. The next pipe makes the resulting command the first argument of the first function `filter()`. The next pipe takes the result of all of this and make it the first argument of the next function, which is `ungoup()`. And the last pipe make the resulting dataframe, the first argument of the second function filter. Here we go. We have a neat and concise command! Note that when using pipes, the second argument of all the dplyr functions become the first argument, since the dataframe argument is taken care of by the pipe.
-
-
+We start with the dataset `imdb`. The pipe next to it will make it the first argument of the function `group_by()` that follows. The next pipe makes the resulting command the first argument of the first function `filter()`. The next pipe takes the result of all of this and make it the first argument of the next function, which is `ungoup()`. And the last pipe makes the resulting dataframe, the first argument of the second function filter. Here we go. We have a neat and concise command! Note that when using pipes, the output from the previous line always takes the place of the ‘data’ argument we have seen so far. So when using the commands with the pipes, we skip straight to the second argument. Sometimes we might not have a second argument, like with ungroup(). So here, we don’t need to write anything within the brackets. Also note that the order of our commands matter. Try and see if you can understand what happens when you change the order of these commands.
 
 
 And that's where things start to be very interesting. Because with pipes, it is not a pain anymore to perform a long sequence of manipulations. So we can really start to have fun!
@@ -186,7 +225,7 @@ And that's where things start to be very interesting. Because with pipes, it is 
 ```{r pipe_4-solution}
 imdb %>%
   group_by(type) %>%
-  filter(averageRating==max(averageRating))
+    filter(averageRating==max(averageRating))
 
 ```
 
@@ -195,44 +234,95 @@ imdb %>%
 ## Bringing it all together
 
 
-Let's now continue exploring this imdb dataset using all the knowledge acquired so far.
+Let's now continue exploring this imdb dataset using all the knowledge acquired so far. We will start using the columns indicating the genre of the entries (`animation`, `action`, `adventure`, etc.). Let's use the function select to have a better look at these columns:
+
+```{r all_0, exercise = TRUE}
+select(imdb, animation:thriller)
+```
+
+If you look below each of the column names, there is a grey set of weird characters. It indicates the type of the variable. Here the set of characters is `<lgl>` and "lgl" is a shorthand for 'logical'. So these Genre variables are of type 'logical'. The only values that a logical variable can take are TRUE and FALSE, which are special values used by R to determine if a condition is true or false.
+
+For that reason, if we want to filter our rows based on these columns, say we want to keep only the rows where `sci-fi`equals "TRUE"; we can omit the usual quotes around the TRUE:
+
+```{r all_0b, exercise = TRUE}
+imdb %>%
+  filter(sci_fi==TRUE)
+```
 
 
-If you are a bit into science-fiction like me, you may like to know what are the most popular entries of this genre, for each type of entry.
+Now if you are a bit into science-fiction like me, you may like to know what are the most popular entries of this genre, for each type of entry.
 
+
+Let's group the result of our command filter by type:
+```{r all_0c, exercise = TRUE}
+imdb %>%
+  filter(sci_fi=="TRUE") %>%
+    group_by(type)
+
+```
+Nothing changes. Normal, since the grouping done by `group_by` is invisible.
+
+Let's then use filter again to retrieve the most voted entries for each of our groups.
 ```{r all_1, exercise = TRUE}
 imdb %>%
   filter(sci_fi=="TRUE") %>%
-  group_by(type) %>%
-  filter(numVotes==max(numVotes))
+    group_by(type) %>%
+      filter(numVotes==max(numVotes))
 
 ```
-So here we used filter twice. We first used it to keep only the entries of genre `sci-fi`, then we grouped the data by type and finally we used filter again to keep only the entry of each type that has received the highest number of votes.
-
-Note that the order of our commands matter. Try and see if you can understand what happens when you change the order of these commands, as well as when you combine the two `filter()` together.
 
 
-Also let's not hesitate to add a `select()` at the end of our command, to get rid of the columns that we don't want and rearrange the columns we want for better redability.
+And let's not hesitate to add a `select()` at the end of our command, to get rid of the columns that we don't want and rearrange the columns we want for better readability.
 
 ```{r all_2, exercise = TRUE}
 imdb %>%
   filter(sci_fi=="TRUE") %>%
-  group_by(type) %>%
-  filter(numVotes==max(numVotes)) %>%
-  select(title, averageRating, numVotes, type)
+    group_by(type) %>%
+      filter(numVotes==max(numVotes)) %>%
+        select(title, averageRating, numVotes, type)
 
+```
+The tv short entry in the list is a definite little gem according to Sam. I will probably watch it on the weekend.
+
+
+**Question: Try to change the order of the commands. What happens if you start with select()? And what happens if you combine the two `filter()` together, by bringing `sci_fi=="TRUE"` inside the second command filter? Take some time to analyse the commands and outputs before looking at the solution**
+
+```{r all_2b, exercise = TRUE}
+imdb %>%
+  filter(sci_fi=="TRUE") %>%
+    group_by(type) %>%
+      filter(numVotes==max(numVotes)) %>%
+        select(title, averageRating, numVotes, type)
+
+```
+
+```{r all_2b-solution}
+# select at the start
+imdb %>%
+  select(title, averageRating, numVotes, type)
+    filter(sci_fi=="TRUE") %>%
+      group_by(type) %>%
+        filter(numVotes==max(numVotes)) %>%
+# we get an error, because after the command select, the column sci-fi is not in our dataset anymore.
+
+# filter combined
+imdb %>%
+  group_by(type) %>%
+    filter(numVotes==max(numVotes) & sci_fi=="TRUE") %>%
+      select(title, averageRating, numVotes, type)
+# we only get one entry instead of one entry per type. That's because apart for the type "tvMovie", the most voted entry was never of Genre sci-fi. So the command filter retrieves nothing.
 ```
 
 
 
-Of course, if we want to store the result of our command into a dataframe object for later use, we can do that. As said before, moving the lines below the pipe instead of to their right doesn't change anything for R.
+Of course, if we want to store the result of our full command into a dataframe object for later use, we can do that.
 
 ```{r all_3, exercise = TRUE}
 best_scifi <- imdb %>%
   filter(sci_fi=="TRUE") %>%
-  group_by(type) %>%
-  filter(numVotes==max(numVotes)) %>%
-  select(title, averageRating, numVotes, type)
+    group_by(type) %>%
+      filter(numVotes==max(numVotes)) %>%
+        select(title, averageRating, numVotes, type)
 
 ```
 
@@ -242,71 +332,194 @@ Something we can also do is continue our commands with functions that are not pa
 
 
 
-Let's try and make a little scatter plot showing the average rating (on the y axis) of the most popular movie released in the year, where year is on the x axis.
+Let's try and make a little scatter plot showing the average rating (on the y axis) of the most voted on movie released per year, where year is on the x axis. How are we going to do that?
 
+Well we know that we're only interested in movies, so a safe first step would be to filter out the other entries using filter:
+```{r all_4a, exercise = TRUE}
+imdb %>%
+  filter(type=="movie")
 
-```{r all_4, exercise = TRUE}
+```
+
+Then we probably need to think a little. We want to plot the average rating for each year. Fine, we have both columns in the dataset, so no need to create new ones. But we don't want to plot all the entries on our graph. We only want the entries that received the highest number of votes for that year. Ok, so we will need a second filter. If we use the second filter now, we only get one point to plot:
+
+```{r all_4b, exercise = TRUE}
 imdb %>%
   filter(type=="movie")%>%
-  group_by(year) %>%
-  filter(numVotes==max(numVotes)) %>%
-  ggplot(aes(x=year, y=averageRating))+
-    geom_point()
+    filter(numVotes==max(numVotes))
 
 ```
 
-Do you follow the logic? We filter our dataset to keep only the entries of type movie, then we group those movies by year. We then use filter again to only keep the most popular movie released in that year, and we finally make our scatter plot, where we don't need to indicate the usual "data=..." as the first argument, since the pipe already does it for us.
-
-Looking at this graph, it looks like if we strictly focus on the best rated movie, there is an upward trend in quality. But what if we plot the average of the average ratings, instead of the average rating of the most popular movie?
-
-```{r all_5, exercise = TRUE}
+Instead, we want one data point per yer... ok I think we all got it right? We need to group our dataset per year first
+```{r all_4c, exercise = TRUE}
 imdb %>%
   filter(type=="movie")%>%
-  group_by(year) %>%
-  summarize(meanRating=mean(averageRating)) %>%
-  ggplot(aes(x=year, y=meanRating))+
-    geom_point()
+    group_by(year)
 
 ```
 
-Indeed, the story is quite different. Let's be careful with our interpretations though, as the way our dataset and the imdb database are built, makes comparisons between years a bit tricky.
+Nothing happens, as usual, which is fine.
+Then we use our second filter:
 
-
-
-Finally, once you get familiar with the pipe operator and all the functions we've seen so far, it quickly becomes pretty easy to make more complicated sequences of manipulations. Take some time to analyse and understand the following command.
-
-```{r all_6, exercise = TRUE}
+```{r all_4d, exercise = TRUE}
 imdb %>%
-  group_by(director) %>% 
-  summarize(n=n(), meanRating=mean(averageRating), sumVotes=sum(numVotes), medianLength=median(length)) %>%
-  mutate(meanVotes=sumVotes/n) %>%
-  filter(n>10 & meanVotes>10000) %>%
-  arrange(desc(meanRating)) %>% 
-  select(director, n, meanRating, medianLength)
-    
+  filter(type=="movie")%>%
+    group_by(year) %>%
+      filter(numVotes==max(numVotes))
+
 ```
 
-**Question: What does the command above do? Which line could we remove by modifying the inside of the function summarize()?**
+I'm pretty sure our resulting data is ready for the scatter plot, but you may not be, so I suggest we add an extra arrange to order our rows by year and check that indeed, we have one unique entry for each year. `arrange()` doesn't do anything other than order rows, so we can safely add it to our stack of commands.
+
+```{r all_4e, exercise = TRUE}
+imdb %>%
+  filter(type=="movie")%>%
+    group_by(year) %>%
+      filter(numVotes==max(numVotes))%>%
+        arrange(year)
+
+```
+Note that we didn't need to use `ungroup()` before `arrange()`, because the function arrange is not affected by groupings.
+
+Ok I think it looks good. Let's now add our ggplot command with `year` as x and `arverageRating` as y
+```{r all_4f, exercise = TRUE}
+imdb %>%
+  filter(type=="movie")%>%
+    group_by(year) %>%
+      filter(numVotes==max(numVotes)) %>%
+        arrange(year)%>%
+          ggplot(aes(x=year, y=averageRating))
+
+```
+
+Note that we don't need to indicate the usual "data=..." as the first argument, since the pipe already does it for us.
+
+... and finally, let's add a geom. We want a scatter plot, so we use `geom_point()`
+
+```{r all_4g, exercise = TRUE}
+imdb %>%
+  filter(type=="movie")%>%
+    group_by(year) %>%
+      filter(numVotes==max(numVotes)) %>%
+        arrange(year)%>%
+          ggplot(aes(x=year, y=averageRating))+
+            geom_point()
+
+```
+
+Yes, we have it! So let's recap. We filtered our dataset to keep only the entries of type movie. We then grouped those movies by year. We used filter again to only keep the most popular movie released in that year We reordered the rows to check that everything was ok. And we finally made our scatter plot. If performance was a concern, I would definitely remove the command arrange now, which is unnecessary. But I believe our server should be fine.
+
+
+Looking at the graph, there seems to be an upward trend, that is the average rating of the most popular movie for each year seems to increase as we get to more recent years. Well, on average at least. That's interesting. Is it suggesting that the movies increase in quality over the years? Maybe we should explore how the rating evolves in average over all the entries rather than restrict ourselves to the most popular entries. How would we do that?
+
+
+
+Well it all looks the same to me till the second filter. Because we don't want to restrict ourselves to the most popular movies. So let's remove all the commands after group_by() and start from there:
+
+```{r all_5a, exercise = TRUE}
+imdb %>%
+  filter(type=="movie")%>%
+    group_by(year)
+
+```
+
+
+Now for each year, we want to plot the *average* of the average rating of the movies. So this a summary statistics that we need. We need to use `summarize()`.
+
+```{r all_5b, exercise = TRUE}
+imdb %>%
+  filter(type=="movie")%>%
+    group_by(year) %>%
+      summarise(meanRating=mean(averageRating))
+
+```
+
+Ok, we know have two columns. One for the year and one for the this *average* average rating. We're good to do our scatter plot
+
+
+```{r all_5c, exercise = TRUE}
+imdb %>%
+  filter(type=="movie")%>%
+    group_by(year) %>%
+      summarise(meanRating=mean(averageRating)) %>%
+        ggplot(aes(x=year, y=meanRating))+
+          geom_point()
+
+```
+
+
+Wow, the story is quite different here. In average, the rating of the movies seems to decline over the years. We definitely need to be careful with our interpretations though, as the way our dataset and the imdb database are built, makes comparisons between years a bit tricky.
+
+
+As you may start to see, once you get familiar with the pipe operator and all the functions we've seen so far, it quickly becomes pretty easy to make long sequences of manipulations.
+
+
+
+Here is a hard question to finish with this workbook. Take your time to analyse and understand what we want. Try to find the different steps required and see if you can arrange all of it in a command that would respond to the question. You'll see two boxes below the question. One where you can get a series of hints (you'll have a button "next hint" in the hint window), and one where you can get a full solution. Start with the hints before checking the solution.
+
+
+
+**Question: rank the directors who have more than 10 entries in the imdb dataset and an average number of votes over all their entries greater than 10000, by decreasing average of the "average rating" of all their entries**
+
 
 ```{r all_7, exercise = TRUE}
 
     
 ```
 
-```{r all_7-solution}
-# 1- The command ranks the directors who have more than 10 entries in the imdb dataset and an average number of votes over all their entries greater than 10000, by decreasing average of all the rating of their entries.
-# 2- the line with the function mutate() could be deleted if we were directly writing meanVotes=mean(numVotes) instead of sumVotes=sum(numVotes) in the summarize() function
 
+```{r all_7-hint-1}
+# we want to rank the directors, so at the end, we need one row per director.
+# For now we often have many entries for each director though,
+# so we probably need to group our data by director
+# and then use a filter or summarize... or both?
+
+```
+
+```{r all_7-hint-2}
+# We only want to keep the directors who have more than 10 entries in the imdb dataset
+# and an average number of votes over all their entries greater than 10000
+# ... but the number of entries and average number of votes are not columns of our dataset,
+# so we probably need to calculate these using summarise().
+
+```
+
+```{r all_7-hint-3}
+# Once we've grouped our dataset by director
+# and then summarised the rows to get the number of entries (function n())
+# and the average number of votes (function mean()),
+# we need can get rid of the directors who don't meet our condition using filter()
+```
+
+```{r all_7-hint-4}
 imdb %>%
   group_by(director) %>% 
-  summarize(n=n(), meanRating=mean(averageRating), meanVotes=mean(numVotes), medianLength=median(length)) %>%
-  filter(n>10 & meanVotes>10000) %>%
-  arrange(desc(meanRating)) %>% 
-  select(director, n, meanRating, medianLength)
+    summarise(n=n(),  meanVotes=mean(numVotes)) %>%
+      filter(n>10 & meanVotes>10000)
+
+# what's left is to rank the directors by decreasing average of the "average rating" of all their entries.
+# So we need to also calculate the average of the "average rating" in the summarise function.
+# And then we can arrange the rows by this new variable.
+
+```
+
+
+
+```{r all_8, exercise = TRUE}
+
     
 ```
 
-The package dplyr has a number of other useful functions that we have not explored, like slice(), rename(), count(), as well as convenient variations of the core functions that have learnt to use. See the section `Appendix: Useful reference links` for more information.
+```{r all_8-solution}
+imdb %>%
+  group_by(director) %>% 
+    summarise(n=n(), meanVotes=mean(numVotes), meanRating=mean(averageRating)) %>%
+      filter(n>10 & meanVotes>10000) %>%
+        arrange(desc(meanRating))
+    
+```
+
+
 
 
 ## Appendix: 'imdb' dataset
@@ -351,8 +564,7 @@ DT::datatable(imdb[c(1:50)*1000,])
 
 ## Appendix: Useful reference links  
 
-
-The official list of functions and documentation of the dplyr package: <a href="https://r4ds.had.co.nz/transform.html" target="_blank">https://dplyr.tidyverse.org/reference/index.html</a> 
+The official list of functions and documentation of the dplyr package (you'll see that dplyr comes with lots of other useful functions in addition to the core ones that we've learnt to use): <a href="https://r4ds.had.co.nz/transform.html" target="_blank">https://dplyr.tidyverse.org/reference/index.html</a> 
 
 A more advanced tutorial: <a href="https://r4ds.had.co.nz/transform.html" target="_blank">https://r4ds.had.co.nz/transform.html</a> 
 
