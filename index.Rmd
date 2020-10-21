@@ -29,7 +29,7 @@ As explained in the video, if we don't store the results of our commands, there 
 - store the result of each manipulation as a dataframe, to then make it the first argument of the next function.
 - combine all the manipulations we want to perform into one single command using the pipe operator.
 
-You already know everything there is to know to perform to perform a sequence of manipulations via the first option.
+You already know everything there is to know to perform a sequence of manipulations via the first option.
 For example, if we wanted to calculate summary statistics based only on the movies in the data only, we could do the following:
 
 ```{r sequence_1, exercise = TRUE}
@@ -86,7 +86,7 @@ filter(imdb, type=="videoGame")
 ```
 
 
-The effect of `group_by()` on the result of `summarise()` is very intuitive. We obtain the calculated summaries for each of the groups defined by group_by. At first, it might be slightly less obvious that `group_by()` is also very useful in combination with `filter()` or `mutate()`. But consider the case where we would like to obtain for each type of entry, the one that received the highest number of votes. With filter, we can easily get the entry that has received the highest number of votes in the full dataset:
+The effect of `group_by()` on the result of `summarise()` is very intuitive. We obtain the calculated summaries for each of the groups defined by the function `group_by()`. At first, it might be slightly less obvious that `group_by()` is also very useful in combination with `filter()` or `mutate()`. But consider the case where we would like to obtain for each type of entry, the one that received the highest number of votes. With filter, we can easily get the entry that has received the highest number of votes in the full dataset:
 ```{r group_4, exercise = TRUE}
 filter(imdb, numVotes==max(numVotes))
 
@@ -148,8 +148,7 @@ filter(temp_data, numVotes==min(numVotes))
 
 It looks slightly simpler maybe, and show you that when creating objects with `<-`, it makes no difference whether the name of the object is new or not. If it is not new, R will just overwrite the old object.
 
-But we can make our command much more clean and readable if we use the pipe operator.
-
+But this way of overwriting objects over and over is definitely not good practice, as in some situations you may end up loosing valuable data. We don't need to use such approach though. We can make our command much more clean and readable if we use the pipe operator.
 
 
 
@@ -350,7 +349,7 @@ imdb %>%
 
 ```
 
-Instead, we want one data point per yer... ok I think we all got it right? We need to group our dataset per year first
+Instead, we want one data point per year... ok I think we all got it right? We need to group our dataset per year first
 ```{r all_4c, exercise = TRUE}
 imdb %>%
   filter(type=="movie")%>%
