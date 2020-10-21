@@ -230,8 +230,8 @@ imdb %>%
 
 
 
-## Bringing it all together
 
+## Getting used to pipes
 
 Let's now continue exploring this imdb dataset using all the knowledge acquired so far. We will start using the columns indicating the genre of the entries (`animation`, `action`, `adventure`, etc.). Let's use the function select to have a better look at these columns:
 
@@ -281,7 +281,7 @@ imdb %>%
         select(title, averageRating, numVotes, type)
 
 ```
-The tv short entry in the list is a definite little gem according to Sam. I will probably watch it on the weekend.
+The TV short entry in the list is a definite little gem according to Sam. I will probably watch it on the weekend.
 
 
 **Question: Try to change the order of the commands. What happens if you start with select()? And what happens if you combine the two `filter()` together, by bringing `sci_fi=="TRUE"` inside the second command filter? Take some time to analyse the commands and outputs before looking at the solution**
@@ -309,7 +309,8 @@ imdb %>%
   group_by(type) %>%
     filter(numVotes==max(numVotes) & sci_fi=="TRUE") %>%
       select(title, averageRating, numVotes, type)
-# we only get one entry instead of one entry per type. That's because apart for the type "tvMovie", the most voted entry was never of Genre sci-fi. So the command filter retrieves nothing.
+# we only get one entry instead of one entry per type. That's because apart for the type "tvMovie",
+# the most voted entry was never of Genre sci-fi. So the command filter retrieves nothing.
 ```
 
 
@@ -326,6 +327,9 @@ best_scifi <- imdb %>%
 ```
 
 
+
+
+## Getting good with pipes
 
 Something we can also do is continue our commands with functions that are not part of dplyr, because pipe is so popular that lots of the most recent packages provide functions that are compatible with pipes. And as said in the video, `ggplot()` is compatible with pipes, since its first argument is the dataframe used to make the plot.
 
@@ -527,7 +531,7 @@ For this session, we are using a dataset called "imdb", which we constructed fro
 <a href="https://www.imdb.com/interfaces/" target="_blank">https://www.imdb.com/interfaces/</a>
 
 
-It contains the following informations for all the entries having more than 500 votes, that are not of type "tvEpisodes" and for which information about year of release, running time and director(s) was available at the time of extraction (28/09/2020):  
+It contains the following information for all the entries having more than 500 votes, that are not of type "tvEpisodes" and for which information about year of release, running time and director(s) was available at the time of extraction (28/09/2020):  
 
 
 ```{r, echo=FALSE,message=FALSE,warning=FALSE}
