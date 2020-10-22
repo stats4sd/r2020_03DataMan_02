@@ -22,7 +22,7 @@ imdb <- readRDS("imdb2020.RDS")
 
 ## Combining manipulations
 
-[Embed video #2]
+![](https://youtu.be/skdI9iIysm0)
 
 As explained in the video, if we don't store the results of our commands, there is no way to re-use them. This is actually true for the great majority of R commands, not just those involving the core functions of dplyr. So to perform a sequence of manipulations, we need to either:
 
